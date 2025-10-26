@@ -2,7 +2,6 @@ package users
 
 import (
 	"errors"
-	"fmt"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"go-to-do-checklist/internal/config"
@@ -39,7 +38,6 @@ func Register(cfg *config.Config, log *slog.Logger, userStorage UserStorage) htt
 		log.Info("request body decoded", slog.Any("request", req))
 
 		role := "user"
-		fmt.Println(cfg.AdminPass, req.AdminPass)
 		if req.AdminPass == cfg.AdminPass {
 			role = "admin"
 		}
