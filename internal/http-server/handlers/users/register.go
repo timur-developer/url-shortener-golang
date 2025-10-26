@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/render"
 	"go-to-do-checklist/internal/config"
 	resp "go-to-do-checklist/internal/lib/api/response"
+	"go-to-do-checklist/internal/lib/jwt"
 	"go-to-do-checklist/internal/lib/logger/sl"
 	"go-to-do-checklist/internal/storage"
 	"log/slog"
@@ -61,6 +62,16 @@ func Register(cfg *config.Config, log *slog.Logger, userStorage UserStorage) htt
 			return
 		}
 
-		render.JSON(w, r, record)
+		tokens, err := jwt.GenerateTokenPair(record.ID, record.Username, record.UserRole)
+		if err != nil {
+			log.Error("failed to generate tokens", sl.Err(err))
+			render.JSON(w, r, resp.Error("failed to generate tokens"))
+			return
+		}
+
+		render.JSON(w, r, map[string]interface{}{
+			"status": "user registered successfully",
+			"tokens": tokens,
+		})
 	}
 }

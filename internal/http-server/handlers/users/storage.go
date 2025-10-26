@@ -1,6 +1,8 @@
 package users
 
-import "go-to-do-checklist/internal/storage"
+import (
+	"go-to-do-checklist/internal/storage"
+)
 
 type UserStorage interface {
 	SaveUser(username, password, userRole string) error

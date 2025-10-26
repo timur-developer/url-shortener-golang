@@ -39,7 +39,6 @@ func AuthMiddleware(userStorage users.UserStorage) func(http.Handler) http.Handl
 			username, password := data[0], data[1]
 			userGotten, err := userStorage.AuthenticateUser(username, password)
 			if err != nil {
-				fmt.Printf("DEBUG: Authentication failed: %v\n", err)
 				if errors.Is(storage.ErrUserNotFound, err) {
 					http.Error(w, fmt.Sprintf("fail to found user '%v'", username), http.StatusNotFound)
 					return
