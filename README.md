@@ -16,7 +16,7 @@ A secure and scalable URL shortening service with authentication and role-based 
 - Go 1.21+
 - PostgreSQL
 - Chi Router
-- Basic Authentication
+- JWT Authentication
 
 ---
 
