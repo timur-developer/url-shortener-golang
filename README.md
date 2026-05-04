@@ -1,49 +1,87 @@
 # URL Shortener
 
-A secure and scalable URL shortening service with authentication and role-based access control.
+Cервис сокращения ссылок с авторизацией, ролями пользователей и хранением данных в PostgreSQL.
 
-## Features
+Проект реализует полноценный backend для работы с короткими ссылками: пользователь может создать короткий alias (псевдоним) для длинного URL, перейти по короткой ссылке, управлять своими ссылками и смотреть базовую аналитику. Для администраторов предусмотрены расширенные права управления ссылками и пользователями.
 
-- URL shortening with custom aliases
-- User authentication (Basic Auth)
-- Role-based permissions (Anonymous/User/Admin)
-- RESTful API
-- PostgreSQL storage
-- Admin dashboard
+## Возможности
 
-## Tech Stack
+- создание коротких ссылок для длинных URL;
+- поддержка пользовательских alias;
+- редирект с короткой ссылки на оригинальный URL;
+- регистрация и аутентификация пользователей;
+- разграничение доступа по ролям: `Anonymous`, `User`, `Admin`;
+- управление собственными ссылками для авторизованных пользователей;
+- административные возможности для управления всеми ссылками;
+- хранение данных в PostgreSQL;
+- REST API для интеграции с внешними клиентами;
+- административная панель для управления сервисом.
+
+## Технологии
 
 - Go 1.21+
 - PostgreSQL
 - Chi Router
 - JWT Authentication
+- Basic Auth
+- REST API
 
----
+## Основная логика
 
-## Quick Start
+Сервис принимает длинный URL и создает для него короткий идентификатор. Если пользователь передает собственный alias, сервис проверяет его уникальность и связывает alias с исходной ссылкой.
 
-### 1. Clone the repository
+При переходе по короткому URL сервис находит оригинальный адрес в базе данных и выполняет redirect. Это позволяет использовать приложение как самостоятельный URL shortener или как backend для внешнего web/mobile-клиента.
+
+Для разных типов пользователей доступны разные сценарии:
+
+| Роль | Возможности |
+|------|-------------|
+| Anonymous | Создание ссылок и переход по коротким ссылкам |
+| User | Управление собственными ссылками и просмотр аналитики |
+| Admin | Управление всеми ссылками и пользователями |
+
+## Запуск проекта
+
+### 1. Клонирование репозитория
 
 ```bash
-git clone <your-repo>
+git clone <repository-url>
 cd go-url-shortener
 ```
 
-### 2. Configure the database
+### 2. Настройка базы данных
 
-Set up PostgreSQL connection in `config/local.yaml`
+Укажите параметры подключения к PostgreSQL в файле:
 
-### 3. Run the application
+```text
+config/local.yaml
+```
+
+Пример параметров, которые обычно требуются приложению:
+
+```yaml
+storage:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: postgres
+  dbname: url_shortener
+  sslmode: disable
+```
+
+Названия полей могут отличаться в зависимости от текущей структуры конфигурации проекта.
+
+### 3. Запуск приложения
 
 ```bash
 go run cmd/url-shortener/main.go
 ```
 
----
+После запуска API будет доступно на адресе, указанном в конфигурации приложения.
 
-## API Examples
+## Примеры API
 
-### Create short URL
+### Создание короткой ссылки
 
 ```http
 POST /url
@@ -55,7 +93,16 @@ Content-Type: application/json
 }
 ```
 
-### Register user
+Пример ответа:
+
+```json
+{
+  "alias": "my-link",
+  "url": "https://example.com"
+}
+```
+
+### Регистрация пользователя
 
 ```http
 POST /register
@@ -67,33 +114,55 @@ Content-Type: application/json
 }
 ```
 
-### Redirect to original URL
+### Переход по короткой ссылке
 
 ```http
 GET /my-link
 ```
 
----
+Если alias существует, сервис вернет redirect на оригинальный URL.
 
-## Role-Based Access
+## Авторизация и роли
 
-| Role      | Permissions                               |
-|-----------|-------------------------------------------|
-| Anonymous | Create links, Redirect                    |
-| Users     | Manage own links, View analytics          |
-| Admins    | Manage all links, User management         |
+Сервис поддерживает разграничение доступа по ролям.
 
----
+Анонимные пользователи могут создавать ссылки и пользоваться редиректом. Авторизованные пользователи получают доступ к управлению своими ссылками и аналитике. Администраторы могут управлять всеми ссылками и пользователями.
 
-## Git Setup
+JWT используется для защиты endpoint-ов, которым требуется авторизация. Basic Auth может использоваться для сценариев входа или проверки учетных данных, если это предусмотрено конфигурацией проекта.
 
-If you're setting up this repository for the first time:
+## Безопасность
 
-```bash
-git init
-git add .
-git commit -m "Initial commit: URL shortener with auth"
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-git branch -M main
-git push -u origin main
+В проекте заложены базовые механизмы безопасности:
+
+- проверка входных данных при создании ссылок;
+- контроль уникальности alias;
+- разграничение доступа по ролям;
+- защита приватных endpoint-ов авторизацией;
+- хранение данных в PostgreSQL вместо in-memory состояния.
+
+## Структура проекта
+
+Типичная структура приложения:
+
+```text
+cmd/url-shortener/     точка входа в приложение
+config/                конфигурационные файлы
+internal/              основная бизнес-логика проекта
+migrations/            SQL-миграции, если используются
 ```
+
+## Развитие проекта
+
+Проект можно расширять в нескольких направлениях:
+
+- статистика переходов по ссылкам;
+- rate limiting для публичных endpoint-ов;
+- срок жизни коротких ссылок;
+- soft delete для пользовательских ссылок;
+- расширенная admin-панель;
+- OpenAPI/Swagger-документация;
+- Docker Compose для локального запуска с PostgreSQL.
+
+## Назначение проекта
+
+`URL Shortener` демонстрирует backend-сервис с практичной бизнес-логикой, хранением данных, авторизацией и ролевой моделью. Проект подходит как основа для production-like URL shortener или как пример Go-сервиса с REST API и PostgreSQL.
